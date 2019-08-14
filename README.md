@@ -1,7 +1,7 @@
-# three-example
+## three-example
 three.js的入门例子,以下其他例子均为例子1(单例模式)进行扩展变形,所以学习时需要先掌握例子1的格式.
 
-## 目录结构
+### 目录结构
 
 1. 基础模板
   1.1. [基础模板](./example/base.html);     【done】
@@ -41,11 +41,11 @@ three.js的入门例子,以下其他例子均为例子1(单例模式)进行扩�
 9.3 three与tween的组合使用
 
 
-## three.js里面的基础概念和关系
+### three.js里面的基础概念和关系
 
 
 
 
 
-##参考
+###参考
 1. [Threejs基础教程](http://www.hewebgl.com/article/articledir/1)
