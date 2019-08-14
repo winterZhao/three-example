@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>照相机的角度对标尺的影响</title>
+  <style>
+      #root {
+        border: none;
+        cursor: pointer;
+        width: 100%;
+        height: 600px;
+        background-color: #eee;
+      }
+  </style>
+</head>
+<body>
+    <h3>照相机的角度对标尺的影响</h3>
+    <ul>
+        <p>使用: 在guide.html基础上修改initCamera方法里的有关照相机的参数</p>
+    </ul>
+  <div id="root"></div>
+  <script src="https://cdn.bootcss.com/three.js/r83/three.min.js"></script>
+  <script>
+      const obj = {
+        renderer: null, 
+        camera: null, 
+        width: null, 
+        height: null, 
+        scene: null, 
+        light: null, 
+        mesh: null,
+        isExpand: true,  // true表示放大,false表示缩小;
+        init() {
+          this.initThree();   // 初始化three
+          this.initCamera();  // 初始化相机
+          this.initScene();   // 初始化幕布
+          this.initLight();   // 初始化灯光
+          this.initObject();  // 初始化物体
+          this.initGrid();    // 标尺
+          this.render();      // 渲染
+        },
+        initThree() {
+          let width = this.width = document.getElementById('root').clientWidth;
+          let height = this.height = document.getElementById('root').clientHeight;
+          let renderer = this.renderer = new THREE.WebGLRenderer({
+            antialias: true
+          });
+          renderer.setSize(width, height);
+          document.getElementById('root').appendChild(renderer.domElement);
+          renderer.setClearColor(0xFFFFFF, 1);
+        },
+        initCamera() {
+          let camera = this.camera = new THREE.PerspectiveCamera(45, this.width/this.height, 1, 10000);
+          camera.position.x = 100;
+          camera.position.y = 300;
+          camera.position.z = 600;
+          camera.up.x = 0;
+          camera.up.y = -1;
+          camera.up.z = 0;
+          camera.lookAt({
+            x: 0,
+            y: 0,
+            z: 0,
+          })
+        },
+        initScene() {
+          this.scene = new THREE.Scene();
+        },
+        initLight() {
+          let light = this.light = new THREE.DirectionalLight(0xFF0000, 1, 0);
+          light.position.set(100,100,200);
+          this.scene.add(light);
+        },
+        initObject() {
+          let geometry = new THREE.BoxGeometry(100,100,100);
+          for ( let i = 0; i < geometry.faces.length; i+=2 ) {
+            let hex = Math.random() * 0xffffff;
+            geometry.faces[i].color.setHex(hex);
+            geometry.faces[i+1].color.setHex(hex);
+          }
+          let material = new THREE.MeshBasicMaterial({vertexColors: THREE.FaceColors});
+          let mesh = this.mesh =  new THREE.Mesh(geometry, material);
+          mesh.position = new THREE.Vector3(0,0,0);
+          this.scene.add(mesh);
+        },
+        initGrid() {
+          let helper = new THREE.GridHelper( 1000, 50,0x0000ff,  0x808080 );
+          this.scene.add(helper);
+        },
+        render() {
+          if ( this.mesh.scale.x >= 3 ) {
+            this.isExpand = false;
+          } 
+          if ( this.mesh.scale.x <= 1 ) {
+            this.isExpand = true;
+          }
+
+          if ( this.isExpand ) {
+            this.mesh.scale.x += .01;
+            this.mesh.scale.y += .01;
+            this.mesh.scale.z += .01;
+          }
+          if ( !this.isExpand ) {
+            this.mesh.scale.x -= .01;
+            this.mesh.scale.y -= .01;
+            this.mesh.scale.z -= .01;
+          }
+
+          this.renderer.clear();
+          this.renderer.render(this.scene, this.camera);
+          requestAnimationFrame(this.render.bind(this));
+        }
+      }
+      obj.init();
+
+  </script>
+</body>
+</html>
