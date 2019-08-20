@@ -190,7 +190,7 @@ three.js是JavaScript编写的WebGL第三方库,用以实现webGl所支持的2D�
 
 #### demo
 1. [单例模式基础模板和说明](./demo/base.html): 介绍场景(舞台scene)、照相机(camera)、光源(light)、物体(object)基本概念 [done]
-2. [绘制多种几何图形](./demo/geometry.html): 介绍几种常见几何体的画法
+2. [绘制多种几何图形](./demo/geometry.html): 介绍几种常见几何体的画法 [done]
 3. 动画
   * [动画与性能监控器、辅助标尺](./demo/animation.html): 旋转、移动、缩放动画与性能监控器、辅助标尺的使用 [done]
   * [绕自身旋转、绕轴旋转、绕某点旋转](./demo/rotate.html):<span style="color:red">物体实质上都是绕本身的中心点旋转的,可以通过修改自身的中心点(position)调整物体旋转的能力</span> [done]

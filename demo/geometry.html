@@ -115,12 +115,12 @@
           mesh5.position.set(0, 0, 120);
           this.scene.add(mesh5);
 
-          // 梯形
-          let mesh6 =  new THREE.Mesh(new THREE.CircleGeometry(50, 3, 0, 22), new THREE.MeshLambertMaterial({color: 0xEE0000}));
-          mesh6.position.set(200, 0, -100);
+          // 圆台
+          let mesh6 =  new THREE.Mesh(new THREE.CylinderGeometry(30, 50, 100, 8), new THREE.MeshLambertMaterial({color: 0xEE0000}));
+          mesh6.position.set(250, 0, -250);
           this.scene.add(mesh6);
 
-          // 圆台
+          // 梯形
           let mesh7 =  new THREE.Mesh(new THREE.CircleGeometry(50, 3, 0, 22), new THREE.MeshLambertMaterial({color: 0xEE0000}));
           mesh7.position.set(200, 0, 250);
           this.scene.add(mesh7);
