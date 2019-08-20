@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>基于单例模式的基础three.js模板——画了一个正方形</title>
+  <style>
+      #root {
+        border: none;
+        cursor: pointer;
+        width: 100%;
+        height: 600px;
+        background-color: #eee;
+      }
+  </style>
+</head>
+<body>
+  <p>红色正方体在绕自身旋转,绿色正方体在绕x轴旋转,蓝色正方体在绕(400,0,-100)这个点旋转</p>
+  <p>物体本身是不能绕轴,绕某点旋转,所以需要用group做个容器包裹其物体,然后让group去绕轴,绕某点旋转</p>
+  <div id="root"></div>
+  <script src="https://cdn.bootcss.com/three.js/r83/three.min.js"></script>
+  <script>
+      const obj = {
+        renderer: null, 
+        camera: null, 
+        width: null, 
+        height: null, 
+        scene: null, 
+        light: null, 
+        mesh1: null,   // 网格对象1，绕自身旋转
+        group2: null,   // 网格对象2:，绕轴转
+        group3: null,  //  网格对象3， 绕某点转
+        isExpand: true,  // true表示放大,false表示缩小;
+        init() {
+          this.initThree();   // 初始化three
+          this.initScene();   // 初始化场景
+          this.initCamera();  // 初始化相机
+          this.initLight();   // 初始化灯光
+          this.initObject();  // 初始化物体
+          this.initGrid();   //初始化网格
+          this.render();      // 渲染
+        },
+        initThree() {
+          let width = this.width = document.getElementById('root').clientWidth;
+          let height = this.height = document.getElementById('root').clientHeight;
+          let renderer = this.renderer = new THREE.WebGLRenderer({
+            antialias: true
+          });
+          renderer.setSize(width, height);
+          document.getElementById('root').appendChild(renderer.domElement);
+          renderer.setClearColor(0xFFFFFF, 1);
+        },
+        // 初始化场景
+        initScene() {
+          this.scene = new THREE.Scene();
+        },
+        // 初始化照相机
+        initCamera() {
+          // 初始化照相机
+          let camera = this.camera = new THREE.PerspectiveCamera(45, this.width/this.height, 1, 10000);
+          // 照相机的位置
+          camera.position.x = 100;
+          camera.position.y = 300;
+          camera.position.z = 600;
+          // 相机的头部在坐标轴的方向(相机以哪个方向为上方，默认y轴为上方)
+          camera.up.x = 0;
+          camera.up.y = 1;
+          camera.up.z = 0;
+          // 照相机的朝向,照相机默认朝向是z轴负半轴,当照相机的位置改变后,继续朝向z轴负半轴的话很有可能看不到物体，这时候需要改变照相机的朝向。
+          camera.lookAt({
+            x: 0,
+            y: 0,
+            z: 0,
+          })
+        },
+        // 初始化灯光
+        initLight() {
+          // 灯光类型: 平行光
+          let light = this.light = new THREE.AmbientLight(0xFFFFFF, 1, 0);
+          // 灯光的位置
+          light.position.set(100,100,200);
+          // 把灯光添加到场景上;
+          this.scene.add(light);
+        },
+        // 标尺
+        initGrid() {
+          let helper = new THREE.GridHelper( 1000, 50,0x0000FF,  0x808080 );
+          this.scene.add(helper);
+        },
+        // 初始化物体
+        initObject() {
+          let geometry = new THREE.BoxGeometry(100,100,100);
+          // 正方体1红色,绕自身旋转
+          let mesh1 = this.mesh1 = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({color:0xFF0000}));
+          mesh1.position.set(-200, 0, 200);
+          this.scene.add(mesh1);
+          // 正方体2绿色,绕x轴转(注意设置的mesh的位置，而不是group的,group的位置一旦被设置了就确定,再也无法移动了)
+          let group2 = this.group2 = new THREE.Group();
+          let mesh2  = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({color:0x00FF00}));
+          mesh2.position.set( -200, 0, -300);
+          group2.add(mesh2);
+          this.scene.add(group2)
+          // 正方体3蓝色,绕(5,4,3)这个点旋转
+          let group3 = this.group3 = new THREE.Group();
+          let mesh3  = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({color:0x0000FF}));
+          mesh3.position.set( 200, 0, -300);
+          group3.add(mesh3);
+          group3.position.set(400,0,-100);
+          this.scene.add(group3)
+        },
+        // 渲染器渲染
+        render() {
+          this.mesh1.rotation.z += .01;
+          this.group2.rotation.x += .01;
+          this.group3.rotation.z += .01;
+          this.renderer.clear();
+          this.renderer.render(this.scene, this.camera);
+          // requestAnimationFrame允许不停的调用传入的参数方法，一般用来渲染动画;
+          // requestAnimationFrame,它告诉浏览器在合适的时候调用指定函数，通常可能达到60FPS
+          requestAnimationFrame(this.render.bind(this));
+        }
+      }
+      obj.init();
+
+  </script>
+</body>
+</html>

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>照相机的角度对标尺的影响</title>
+  <title>动画与性能监控器、辅助标尺</title>
   <style>
       #root {
         border: none;
@@ -16,12 +16,12 @@
   </style>
 </head>
 <body>
-    <h3>照相机的角度对标尺的影响</h3>
-    <ul>
-        <p>使用: 在guide.html基础上修改initCamera方法里的有关照相机的参数</p>
-    </ul>
+    <h3>组合运动</h3>
+    <p>实现一个从左到右一直放大，到达右侧后旋转一圈后,再从右到左一直缩小的</p>
+    <p>包括旋转、移动、缩放动画,辅助标尺, 性能监控器</p>
   <div id="root"></div>
   <script src="https://cdn.bootcss.com/three.js/r83/three.min.js"></script>
+  <script src="https://cdn.bootcss.com/stats.js/r15/Stats.min.js"></script>
   <script>
       const obj = {
         renderer: null, 
@@ -31,14 +31,17 @@
         scene: null, 
         light: null, 
         mesh: null,
-        isExpand: true,  // true表示放大,false表示缩小;
+        stats: null,
+        leftToRight: 0,  // 表示物体此时处于的状态,0表示物体在从左往右,这是物体移动+缩放; 1表示物体在最右侧，此时物体旋转; 2表示物体在从右往左; 此时物体在移动+ 缩放;
         init() {
           this.initThree();   // 初始化three
-          this.initCamera();  // 初始化相机
           this.initScene();   // 初始化幕布
+          this.initCamera();  // 初始化相机
           this.initLight();   // 初始化灯光
           this.initObject();  // 初始化物体
           this.initGrid();    // 标尺
+          this.initAxes();    // 坐标轴方向;
+          this.initStats();      // 初始化性能监控器
           this.render();      // 渲染
         },
         initThree() {
@@ -51,13 +54,16 @@
           document.getElementById('root').appendChild(renderer.domElement);
           renderer.setClearColor(0xFFFFFF, 1);
         },
+        initScene() {
+          this.scene = new THREE.Scene();
+        },
         initCamera() {
           let camera = this.camera = new THREE.PerspectiveCamera(45, this.width/this.height, 1, 10000);
           camera.position.x = 100;
           camera.position.y = 300;
           camera.position.z = 600;
           camera.up.x = 0;
-          camera.up.y = -1;
+          camera.up.y = 1;
           camera.up.z = 0;
           camera.lookAt({
             x: 0,
@@ -65,16 +71,13 @@
             z: 0,
           })
         },
-        initScene() {
-          this.scene = new THREE.Scene();
-        },
         initLight() {
           let light = this.light = new THREE.DirectionalLight(0xFF0000, 1, 0);
           light.position.set(100,100,200);
           this.scene.add(light);
         },
         initObject() {
-          let geometry = new THREE.BoxGeometry(100,100,100);
+          let geometry = new THREE.BoxGeometry(10,10,10);
           for ( let i = 0; i < geometry.faces.length; i+=2 ) {
             let hex = Math.random() * 0xffffff;
             geometry.faces[i].color.setHex(hex);
@@ -83,37 +86,63 @@
           let material = new THREE.MeshBasicMaterial({vertexColors: THREE.FaceColors});
           let mesh = this.mesh =  new THREE.Mesh(geometry, material);
           mesh.position = new THREE.Vector3(0,0,0);
+          mesh.position.x = -400;
           this.scene.add(mesh);
         },
         initGrid() {
           let helper = new THREE.GridHelper( 1000, 50,0x0000ff,  0x808080 );
           this.scene.add(helper);
         },
+        initAxes() {
+          let helper = new THREE.AxisHelper( 200 );
+          this.scene.add(helper);
+        },
+        initStats() {
+          let stats = this.stats = new Stats(); 
+          // 将stats的界面对应左上角
+          stats.domElement.style.position = 'absolute';
+          stats.domElement.style.right = '0px';
+          stats.domElement.style.top = '0px';
+          document.body.appendChild( stats.domElement );
+        },
         render() {
-          if ( this.mesh.scale.x >= 3 ) {
-            this.isExpand = false;
-          } 
-          if ( this.mesh.scale.x <= 1 ) {
-            this.isExpand = true;
+          if ( this.mesh.position.x >= 400 ) {
+            this.leftToRight = 2;
+          }
+          
+          if ( this.mesh.position.x <= -400 ) {
+            this.leftToRight = 0;
+            this.mesh.rotation.x = 0;
+          }
+          if ( this.mesh.rotation.x > 10 ) {
+            this.leftToRight = 1;
           }
 
-          if ( this.isExpand ) {
+          if ( this.leftToRight === 2 ) {
+            this.mesh.rotation.x += .1;
+          }
+          
+          if ( this.leftToRight === 0 ) {
+            this.mesh.position.x += 1;
             this.mesh.scale.x += .01;
             this.mesh.scale.y += .01;
             this.mesh.scale.z += .01;
           }
-          if ( !this.isExpand ) {
+          if ( this.leftToRight === 1 ) {
+            this.mesh.position.x -= 1;
             this.mesh.scale.x -= .01;
             this.mesh.scale.y -= .01;
             this.mesh.scale.z -= .01;
           }
-
+          
           this.renderer.clear();
           this.renderer.render(this.scene, this.camera);
           requestAnimationFrame(this.render.bind(this));
+          this.stats.update()
         }
       }
       obj.init();
+
 
   </script>
 </body>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>常见几何图形的绘制</title>
+  <style>
+      #root {
+        border: none;
+        cursor: pointer;
+        width: 100%;
+        height: 600px;
+        background-color: #eee;
+      }
+  </style>
+</head>
+<body>
+  <p>四边形的变形可以基于BoxGeometry; 多边形的扩展可以基于CircleGeometry，最后会变成圆。</p>
+  <div id="root"></div>
+  <script src="https://cdn.bootcss.com/three.js/r83/three.min.js"></script>
+  <script>
+      const obj = {
+        renderer: null, 
+        camera: null, 
+        width: null, 
+        height: null, 
+        scene: null, 
+        light: null, 
+        mesh: null,
+        isExpand: true,  // true表示放大,false表示缩小;
+        init() {
+          this.initThree();   // 初始化three
+          this.initScene();   // 初始化场景
+          this.initCamera();  // 初始化相机
+          this.initLight();   // 初始化灯光
+          this.initObject();  // 初始化物体
+          this.initGrid();    // 标尺;
+          this.render();      // 渲染
+        },
+        initThree() {
+          let width = this.width = document.getElementById('root').clientWidth;
+          let height = this.height = document.getElementById('root').clientHeight;
+          let renderer = this.renderer = new THREE.WebGLRenderer({
+            antialias: true
+          });
+          renderer.setSize(width, height);
+          document.getElementById('root').appendChild(renderer.domElement);
+          renderer.setClearColor(0xFFFFFF, 1);
+        },
+        // 初始化场景
+        initScene() {
+          this.scene = new THREE.Scene();
+        },
+        // 初始化照相机
+        initCamera() {
+          // 初始化照相机
+          let camera = this.camera = new THREE.PerspectiveCamera(45, this.width/this.height, 1, 10000);
+          // 照相机的位置
+          camera.position.x = 100;
+          camera.position.y = 300;
+          camera.position.z = 600;
+          // 相机的头部在坐标轴的方向(相机以哪个方向为上方，默认y轴为上方)
+          camera.up.x = 0;
+          camera.up.y = 1;
+          camera.up.z = 0;
+          // 照相机的朝向,照相机默认朝向是z轴负半轴,当照相机的位置改变后,继续朝向z轴负半轴的话很有可能看不到物体，这时候需要改变照相机的朝向。
+          camera.lookAt({
+            x: 0,
+            y: 0,
+            z: 0,
+          })
+        },
+        // 初始化灯光
+        initLight() {
+          // 灯光类型: 平行光
+          let light = this.light = new THREE.DirectionalLight(0xFFFFFF, 1, 0);
+          // 灯光的位置
+          light.position.set(100,100,200);
+          // 把灯光添加到场景上;
+          this.scene.add(light);
+        },
+        initGrid() {
+          let helper = new THREE.GridHelper( 1000, 50,0x0000FF,  0x808080 );
+          this.scene.add(helper);
+        },
+        // 初始化物体
+        initObject() {
+          // 正方形
+          let mesh0  =  new THREE.Mesh(new THREE.BoxGeometry(100,100,0), new THREE.MeshBasicMaterial({color: 0xFFFF00}));
+          mesh0.position.set(-400, 0, 200);
+          this.scene.add(mesh0);
+          // 立方体
+          let mesh1 =  new THREE.Mesh(new THREE.BoxGeometry(100,100,100), new THREE.MeshBasicMaterial({color: 0xFF0000}));
+          mesh1.position.set(-400, 0, -200);
+          this.scene.add(mesh1);
+
+          // 圆形
+          let mesh2 =  new THREE.Mesh(new THREE.CircleGeometry(50,100), new THREE.MeshBasicMaterial({color: 0x00FF00}));
+          mesh2.position.set(-200, 0, 200);
+          this.scene.add(mesh2);
+
+          // 球体
+          let mesh3 =  new THREE.Mesh(new THREE.SphereGeometry(50,25,22,0,6.3, 0, 5), new THREE.MeshLambertMaterial({color: 0xFF0000}));
+          mesh3.position.set(-200, 0, -200);
+          this.scene.add(mesh3);
+
+          // 圆锥几何体
+          let mesh4 =  new THREE.Mesh(new THREE.ConeGeometry(50, 100, 32), new THREE.MeshLambertMaterial({color: 0x0000EE}));
+          mesh4.position.set(0, 0, -250);
+          this.scene.add(mesh4);
+
+          // 扇形
+          let mesh5 =  new THREE.Mesh(new THREE.CircleGeometry(110, 58, 4.2, 1), new THREE.MeshLambertMaterial({color: 0x0000EE}));
+          mesh5.position.set(0, 0, 120);
+          this.scene.add(mesh5);
+
+          // 梯形
+          let mesh6 =  new THREE.Mesh(new THREE.CircleGeometry(50, 3, 0, 22), new THREE.MeshLambertMaterial({color: 0xEE0000}));
+          mesh6.position.set(200, 0, -100);
+          this.scene.add(mesh6);
+
+          // 圆台
+          let mesh7 =  new THREE.Mesh(new THREE.CircleGeometry(50, 3, 0, 22), new THREE.MeshLambertMaterial({color: 0xEE0000}));
+          mesh7.position.set(200, 0, 250);
+          this.scene.add(mesh7);
+        },
+        // 渲染器渲染
+        render() {
+          this.renderer.clear();
+          this.renderer.render(this.scene, this.camera);
+          // requestAnimationFrame允许不停的调用传入的参数方法，一般用来渲染动画;
+          // requestAnimationFrame,它告诉浏览器在合适的时候调用指定函数，通常可能达到60FPS
+          requestAnimationFrame(this.render.bind(this));
+        }
+      }
+      obj.init();
+
+  </script>
+</body>
+</html>

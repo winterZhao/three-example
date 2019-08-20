@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>3d运动-放大缩小</title>
+  <title>基于单例模式的基础three.js模板——画了一个正方形</title>
   <style>
       #root {
         border: none;
@@ -16,10 +16,7 @@
   </style>
 </head>
 <body>
-    <h3>3d运动-放大缩小</h3>
-    <ul>
-        <p>base实例本身就是一个放大缩小的动画,这里直接使用的guide(加了标尺)</p>
-    </ul>
+  <p>当鼠标滑过物体时透明度降低</p>
   <div id="root"></div>
   <script src="https://cdn.bootcss.com/three.js/r83/three.min.js"></script>
   <script>
@@ -32,13 +29,14 @@
         light: null, 
         mesh: null,
         isExpand: true,  // true表示放大,false表示缩小;
+        raycaster: null,
         init() {
           this.initThree();   // 初始化three
+          this.initScene();   // 初始化场景
           this.initCamera();  // 初始化相机
-          this.initScene();   // 初始化幕布
           this.initLight();   // 初始化灯光
           this.initObject();  // 初始化物体
-          this.initGrid();    // 标尺
+          this.initEvent();   // 初始化事件
           this.render();      // 渲染
         },
         initThree() {
@@ -51,65 +49,87 @@
           document.getElementById('root').appendChild(renderer.domElement);
           renderer.setClearColor(0xFFFFFF, 1);
         },
+        // 初始化场景
+        initScene() {
+          this.scene = new THREE.Scene();
+        },
+        // 初始化照相机
         initCamera() {
+          // 初始化照相机
           let camera = this.camera = new THREE.PerspectiveCamera(45, this.width/this.height, 1, 10000);
+          // 照相机的位置
           camera.position.x = 100;
           camera.position.y = 300;
           camera.position.z = 600;
+          // 相机的头部在坐标轴的方向(相机以哪个方向为上方，默认y轴为上方)
           camera.up.x = 0;
           camera.up.y = 1;
           camera.up.z = 0;
+          // 照相机的朝向,照相机默认朝向是z轴负半轴,当照相机的位置改变后,继续朝向z轴负半轴的话很有可能看不到物体，这时候需要改变照相机的朝向。
           camera.lookAt({
             x: 0,
             y: 0,
             z: 0,
           })
         },
-        initScene() {
-          this.scene = new THREE.Scene();
-        },
+        // 初始化灯光
         initLight() {
+          // 灯光类型: 平行光
           let light = this.light = new THREE.DirectionalLight(0xFF0000, 1, 0);
+          // 灯光的位置
           light.position.set(100,100,200);
+          // 把灯光添加到场景上;
           this.scene.add(light);
         },
+        // 初始化物体
         initObject() {
+          // 几何图形,选择的是立方体
           let geometry = new THREE.BoxGeometry(100,100,100);
+          // 确定立方体每个面的颜色,
           for ( let i = 0; i < geometry.faces.length; i+=2 ) {
             let hex = Math.random() * 0xffffff;
             geometry.faces[i].color.setHex(hex);
             geometry.faces[i+1].color.setHex(hex);
           }
+          // 定义材质
           let material = new THREE.MeshBasicMaterial({vertexColors: THREE.FaceColors});
+          // 网格对象:由几何图形+材质构成,几何图形决定形状,材质决定视觉效果;
           let mesh = this.mesh =  new THREE.Mesh(geometry, material);
+          // 位置
           mesh.position = new THREE.Vector3(0,0,0);
+          // 添加到场景上;
           this.scene.add(mesh);
         },
-        initGrid() {
-          let helper = new THREE.GridHelper( 1000, 50,0x0000ff,  0x808080 );
-          this.scene.add(helper);
+        // 初始化事件
+        initEvent() {
+          document.addEventListener('mousemove', this.onDocumentMouseMove.bind(this), false);
         },
+        onDocumentMouseMove(event) {
+          event.preventDefault();
+          // 屏幕坐标转标准设备坐标
+          let x = (event.clientX / window.innerWidth) * 2 - 1;        
+          let y = -(event.clientY / window.innerHeight) * 2 + 1;
+          let mouse = new THREE.Vector2(x,y);
+          let standardVector  = new THREE.Vector3(x, y, 0.5);//标准设备坐标
+          //标准设备坐标转世界坐标
+          let worldVector = standardVector.unproject(this.camera);
+          //射线投射方向单位向量(worldVector坐标减相机位置坐标)
+          let ray = worldVector.sub(this.camera.position).normalize();
+          //创建射线投射器对象
+          let raycaster = new THREE.Raycaster(this.camera.position, ray);
+          //返回射线选中的对象
+          let intersects = raycaster.intersectObjects([this.mesh]);
+          if (intersects.length > 0) {
+            intersects[0].object.material.transparent = true;
+            intersects[0].object.material.opacity = 0.6;
+          }
+        },
+        // 渲染器渲染
         render() {
-          if ( this.mesh.scale.x >= 3 ) {
-            this.isExpand = false;
-          } 
-          if ( this.mesh.scale.x <= 1 ) {
-            this.isExpand = true;
-          }
-
-          if ( this.isExpand ) {
-            this.mesh.scale.x += .01;
-            this.mesh.scale.y += .01;
-            this.mesh.scale.z += .01;
-          }
-          if ( !this.isExpand ) {
-            this.mesh.scale.x -= .01;
-            this.mesh.scale.y -= .01;
-            this.mesh.scale.z -= .01;
-          }
-
           this.renderer.clear();
           this.renderer.render(this.scene, this.camera);
+          // requestAnimationFrame允许不停的调用传入的参数方法，一般用来渲染动画;
+          // requestAnimationFrame,它告诉浏览器在合适的时候调用指定函数，通常可能达到60FPS
           requestAnimationFrame(this.render.bind(this));
         }
       }

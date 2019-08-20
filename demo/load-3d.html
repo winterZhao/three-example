@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>辅助标尺</title>
+  <title>基于单例模式的基础three.js模板——加载3d模型</title>
   <style>
       #root {
         border: none;
@@ -16,14 +16,11 @@
   </style>
 </head>
 <body>
-    <h3>辅助标尺</h3>
-    <ul>
-        <p>使用: base.html基础上扩展</p>
-        <li>obj增加initGrid方法定义</li>
-        <li>init方法里增加initGrid方法调用 this.initGrid();</li>
-      </ul>
+  <p>three.js与OBJLoader.js 最好对应上,否则会有版本不一致导致功能不可用现象</p>
   <div id="root"></div>
   <script src="https://cdn.bootcss.com/three.js/r83/three.min.js"></script>
+  <script src="../loaders/OBJLoader.js"></script>
+  <script src="../loaders//VTKLoader.js"></script>
   <script>
       const obj = {
         renderer: null, 
@@ -33,14 +30,17 @@
         scene: null, 
         light: null, 
         mesh: null,
+        group: null,
+        group2: null,
         isExpand: true,  // true表示放大,false表示缩小;
         init() {
           this.initThree();   // 初始化three
+          this.initScene();   // 初始化场景
           this.initCamera();  // 初始化相机
-          this.initScene();   // 初始化幕布
           this.initLight();   // 初始化灯光
+          this.initAxios();   // 初始化轴线：
           this.initObject();  // 初始化物体
-          this.initGrid();    // 标尺
+          
           this.render();      // 渲染
         },
         initThree() {
@@ -53,70 +53,70 @@
           document.getElementById('root').appendChild(renderer.domElement);
           renderer.setClearColor(0xFFFFFF, 1);
         },
+        // 初始化场景
+        initScene() {
+          this.scene = new THREE.Scene();
+        },
+        // 初始化照相机
         initCamera() {
+          // 初始化照相机
           let camera = this.camera = new THREE.PerspectiveCamera(45, this.width/this.height, 1, 10000);
+          // 照相机的位置
           camera.position.x = 100;
           camera.position.y = 300;
           camera.position.z = 600;
+          // 相机的头部在坐标轴的方向(相机以哪个方向为上方，默认y轴为上方)
           camera.up.x = 0;
           camera.up.y = 1;
           camera.up.z = 0;
+          // 照相机的朝向,照相机默认朝向是z轴负半轴,当照相机的位置改变后,继续朝向z轴负半轴的话很有可能看不到物体，这时候需要改变照相机的朝向。
           camera.lookAt({
             x: 0,
             y: 0,
             z: 0,
           })
         },
-        initScene() {
-          this.scene = new THREE.Scene();
-        },
-        initLight() {
-          let light = this.light = new THREE.DirectionalLight(0xFF0000, 1, 0);
-          light.position.set(100,100,200);
-          this.scene.add(light);
-        },
-        initObject() {
-          let geometry = new THREE.BoxGeometry(100,100,100);
-          for ( let i = 0; i < geometry.faces.length; i+=2 ) {
-            let hex = Math.random() * 0xffffff;
-            geometry.faces[i].color.setHex(hex);
-            geometry.faces[i+1].color.setHex(hex);
-          }
-          let material = new THREE.MeshBasicMaterial({vertexColors: THREE.FaceColors});
-          let mesh = this.mesh =  new THREE.Mesh(geometry, material);
-          mesh.position = new THREE.Vector3(0,0,0);
-          this.scene.add(mesh);
-        },
-        initGrid() {
-          let helper = new THREE.GridHelper( 1000, 50,0x0000ff,  0x808080 );
+        initAxios() {
+          let helper = new THREE.AxisHelper( 200 );
           this.scene.add(helper);
         },
+        // 初始化灯光
+        initLight() {
+          // 灯光类型: 平行光
+          let light = this.light = new THREE.DirectionalLight(0xFF0000, 1, 0);
+          // 灯光的位置
+          light.position.set(100,100,200);
+          // 把灯光添加到场景上;
+          this.scene.add(light);
+        },
+        // 初始化物体
+        initObject() {
+          let manager = new THREE.LoadingManager();
+          // objLoader;
+          let objLoader = new THREE.OBJLoader(manager);
+          objLoader.load('/models/model.obj', (object) => {
+            let group = this.group =  new THREE.Group();
+            group.add(object);
+            group.position.set(0,10,-100)
+            this.scene.add(group);
+          });
+        
+          // vtkLoader
+          let vtkLoader = new THREE.VTKLoader();
+          vtkLoader.load('/models/model.vtk');
+        },
+        // 渲染器渲染
         render() {
-          if ( this.mesh.scale.x >= 3 ) {
-            this.isExpand = false;
-          } 
-          if ( this.mesh.scale.x <= 1 ) {
-            this.isExpand = true;
-          }
-
-          if ( this.isExpand ) {
-            this.mesh.scale.x += .01;
-            this.mesh.scale.y += .01;
-            this.mesh.scale.z += .01;
-          }
-          if ( !this.isExpand ) {
-            this.mesh.scale.x -= .01;
-            this.mesh.scale.y -= .01;
-            this.mesh.scale.z -= .01;
-          }
-
+          
+          if (this.group) this.group.rotation.y += .01;
           this.renderer.clear();
           this.renderer.render(this.scene, this.camera);
+          // requestAnimationFrame允许不停的调用传入的参数方法，一般用来渲染动画;
+          // requestAnimationFrame,它告诉浏览器在合适的时候调用指定函数，通常可能达到60FPS
           requestAnimationFrame(this.render.bind(this));
         }
       }
       obj.init();
-
 
   </script>
 </body>
